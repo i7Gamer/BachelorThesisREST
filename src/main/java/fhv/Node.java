@@ -16,4 +16,5 @@ public class Node {
     private int lateFinish;
     private LinkEnd source;
     private LinkEnd target;
+    private boolean isCriticalPath;
 }

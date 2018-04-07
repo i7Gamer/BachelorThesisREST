@@ -9,26 +9,86 @@ import java.util.stream.Collectors;
 @Service
 public class CriticalPathService {
 
+    List<Node> elements;
+    List<Node> links;
+    List<Path> allPaths = new ArrayList<>();
+
     public List<Node> getCP(List<Node> nodes) {
-        List<Node> links = nodes.stream().filter(n -> n.getType().equals("link")).collect(Collectors.toList());
-        List<Node> elements = nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList());
+
+        links = nodes.stream().filter(n -> n.getType().equals("link")).collect(Collectors.toList());
+        elements = nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList());
 
         Node start = elements.stream().findFirst().filter(n -> n.getType().equals("basic.Path")).get();
 
         List<Node> startElements = new ArrayList<>();
 
-        List<Node> startLinks = links.stream().filter(n -> n.getTarget().getId().equals(start.getId()) || n.getSource().getId().equals(start.getId())).collect(Collectors.toList());
+        List<Node> startLinks = links.stream().filter(n -> n.getSource().getId().equals(start.getId())).collect(Collectors.toList());
 
         for (Node node : startLinks) {
-            if (node.getSource().getId().equals(start)) {
-                startElements.add(elements.stream().findFirst().filter(n -> n.getId().equals(node.getTarget())).get());
-            } else {
-                startElements.add(elements.stream().findFirst().filter(n -> n.getId().equals(node.getSource())).get());
-            }
+                startElements.add(elements.stream().filter(n -> n.getId().equals(node.getTarget().getId())).findFirst().get());
+            // start links entfernen da nicht mehr benötigt
+            this.links.remove(node);
         }
 
         // baum ab startElementen durchlaufen und kritischen pfad berechnen, anschließend rücklaufened restliche werte berechnen
+        Path path = new Path();
+        for (Node node: startElements) {
+            Path path1 = getCriticalPath(new Path(), node);
+            if(path1.durationSum > path.durationSum){
+                path = path1;
+            }
+        }
 
-        return nodes;
+        // critical path druchlaufen
+        for(Node node : path.nodes){
+            elements.stream().filter(n -> n.getId().equals(node.getId())).findFirst().get().setCriticalPath(true);
+        }
+
+        // alle pfade von hinten nach vorne durchlaufen und restliche berechnungen durchführen
+
+        return elements;
+    }
+
+    public Path getCriticalPath(Path path, Node currentElement){
+        // insert early start and finish
+        currentElement.setEarlyStart(path.durationSum);
+        path.durationSum =  path.durationSum + currentElement.getDuration();
+        currentElement.setEarlyFinish(path.durationSum);
+
+        // add current element
+        path.nodes.add(currentElement);
+
+        // get links and call function for every link, remove link so it won't be used again
+        // if no links exist, give back critical path
+        List<Node> links = this.links.stream().filter(n -> n.getSource().getId().equals(currentElement.getId()))
+                .collect(Collectors.toList());
+
+        if(links.isEmpty()){
+            allPaths.add(path);
+            return path;
+        }
+        else {
+            List<Path> paths = new ArrayList<>();
+            for(Node link: links ) {
+                //this.links.remove(link); //should no longer be necessary
+
+                Path newPathToSend = new Path();
+                for (Node node : path.nodes) {
+                    newPathToSend.nodes.add(node);
+                    newPathToSend.durationSum = path.durationSum;
+                }
+
+                Node nextElement = elements.stream().filter(n -> n.getId().equals(link.getTarget().getId())).findFirst().get();
+
+                paths.add(getCriticalPath(newPathToSend, nextElement));
+            }
+
+            for(Path cp : paths){
+                if(cp.durationSum > path.durationSum){
+                    path = cp;
+                }
+            }
+        }
+        return path;
     }
 }
