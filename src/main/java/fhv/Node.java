@@ -1,12 +1,19 @@
 package fhv;
 
+import lombok.Data;
+
+@Data
 public class Node {
-    private Node predecessor;
+    private String type;
+    private String id;
+    private int minTime;
+    private int estTime;
+    private int maxTime;
     private int duration;
-    private String activityName;
     private int earlyStart;
-    private int lateStart;
     private int earlyFinish;
+    private int lateStart;
     private int lateFinish;
-    private int expectedTime;
+    private LinkEnd source;
+    private LinkEnd target;
 }
