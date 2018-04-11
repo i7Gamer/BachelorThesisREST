@@ -18,16 +18,13 @@ public class CriticalPathService {
         links = nodes.stream().filter(n -> n.getType().equals("link")).collect(Collectors.toList());
         elements = nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList());
 
-        Node start = elements.stream().findFirst().filter(n -> n.getType().equals("basic.Path")).get();
-
         List<Node> startElements = new ArrayList<>();
 
-        List<Node> startLinks = links.stream().filter(n -> n.getSource().getId().equals(start.getId())).collect(Collectors.toList());
-
-        for (Node node : startLinks) {
-                startElements.add(elements.stream().filter(n -> n.getId().equals(node.getTarget().getId())).findFirst().get());
-            // start links entfernen da nicht mehr benötigt
-            this.links.remove(node);
+        for (Node n : elements) {
+            List<Node> linksToNode = links.stream().filter(l -> l.getTarget().getId().equals(n.getId())).collect(Collectors.toList());
+            if (linksToNode.size() == 0) {
+                startElements.add(n);
+            }
         }
 
         // baum ab startElementen durchlaufen und kritischen pfad berechnen, anschließend rücklaufened restliche werte berechnen
@@ -83,8 +80,6 @@ public class CriticalPathService {
         else {
             List<Path> paths = new ArrayList<>();
             for(Node link: links ) {
-                //this.links.remove(link); //should no longer be necessary
-
                 Path newPathToSend = new Path();
                 for (Node node : path.nodes) {
                     newPathToSend.nodes.add(node);
