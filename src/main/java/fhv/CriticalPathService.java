@@ -31,21 +31,34 @@ public class CriticalPathService {
         }
 
         // baum ab startElementen durchlaufen und kritischen pfad berechnen, anschließend rücklaufened restliche werte berechnen
-        Path path = new Path();
+        Path criticalPath = new Path();
         for (Node node: startElements) {
             Path path1 = getCriticalPath(new Path(), node);
-            if(path1.durationSum > path.durationSum){
-                path = path1;
+            if (path1.durationSum > criticalPath.durationSum) {
+                criticalPath = path1;
             }
         }
 
-        // critical path druchlaufen
-        for(Node node : path.nodes){
+        // critical path durchlaufen
+        for (Node node : criticalPath.nodes) {
             elements.stream().filter(n -> n.getId().equals(node.getId())).findFirst().get().setCriticalPath(true);
         }
 
         // alle pfade von hinten nach vorne durchlaufen und restliche berechnungen durchführen
 
+        for (Path p : allPaths) {
+            int value = criticalPath.getDurationSum();
+            for (int i = p.nodes.size() - 1; i >= 0; i--) {
+                Node n = p.nodes.get(i);
+                if (n.getLateFinish() > value || n.getLateFinish() == 0) {
+                    n.setLateFinish(value);
+                    value = value - n.getDuration();
+                    n.setLateStart(value);
+                } else {
+                    value = value - n.getDuration();
+                }
+            }
+        }
         return elements;
     }
 
