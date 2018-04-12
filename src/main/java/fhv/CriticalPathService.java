@@ -1,11 +1,13 @@
 package fhv;
 
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@NoArgsConstructor
 @Service
 public class CriticalPathService {
 
@@ -13,18 +15,23 @@ public class CriticalPathService {
     List<Node> links;
     List<Path> allPaths = new ArrayList<>();
 
-    public List<Node> getCP(List<Node> nodes) {
+    public List<Node> getCP(List<Node> nodes) throws Exception {
 
         links = nodes.stream().filter(n -> n.getType().equals("link")).collect(Collectors.toList());
         elements = nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList());
 
         List<Node> startElements = new ArrayList<>();
 
+
         for (Node n : elements) {
             List<Node> linksToNode = links.stream().filter(l -> l.getTarget().getId().equals(n.getId())).collect(Collectors.toList());
             if (linksToNode.size() == 0) {
                 startElements.add(n);
             }
+        }
+
+        if (startElements.size() == 0) {
+            throw new Exception("No starting elements found");
         }
 
         // baum ab startElementen durchlaufen und kritischen pfad berechnen, anschließend rücklaufened restliche werte berechnen
@@ -38,7 +45,7 @@ public class CriticalPathService {
 
         // critical path durchlaufen
         for (Node node : criticalPath.nodes) {
-            elements.stream().filter(n -> n.getId().equals(node.getId())).findFirst().get().setCriticalPath(true);
+            elements.stream().filter(n -> n.getId().equals(node.getId())).findFirst().get().setIsCriticalPath(1);
         }
 
         // alle pfade von hinten nach vorne durchlaufen und restliche berechnungen durchführen
@@ -61,10 +68,13 @@ public class CriticalPathService {
 
     public Path getCriticalPath(Path path, Node currentElement){
         // insert early start and finish
-        currentElement.setEarlyStart(path.durationSum);
+        if (path.durationSum > currentElement.getEarlyStart()) {
+            currentElement.setEarlyStart(path.durationSum);
+        }
         path.durationSum =  path.durationSum + currentElement.getDuration();
-        currentElement.setEarlyFinish(path.durationSum);
-
+        if (path.durationSum > currentElement.getEarlyFinish()) {
+            currentElement.setEarlyFinish(path.durationSum);
+        }
         // add current element
         path.nodes.add(currentElement);
 

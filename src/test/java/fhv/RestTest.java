@@ -19,7 +19,7 @@ public class RestTest {
     private CriticalPathService criticalPathService;
 
     @Test
-    public void criticalPathTest() {
+    public void criticalPathTest() throws Exception {
         List<Node> nodes = new ArrayList<>();
         criticalPathService.getCP(nodes);
 

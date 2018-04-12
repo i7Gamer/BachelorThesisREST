@@ -1,8 +1,12 @@
 package fhv;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Node {
     private String type;
     private String id;
@@ -16,5 +20,5 @@ public class Node {
     private int lateFinish;
     private LinkEnd source;
     private LinkEnd target;
-    private boolean isCriticalPath;
+    private int isCriticalPath = 0;
 }

@@ -1,11 +1,13 @@
 package fhv;
 
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@NoArgsConstructor
 public class PertService {
 
     List<Node> elements;

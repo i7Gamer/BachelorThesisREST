@@ -1,14 +1,13 @@
 package fhv;
 
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
 
+@NoArgsConstructor
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
 
@@ -17,13 +16,17 @@ public class RestController {
     @Autowired
     PertService pertService;
 
-    @RequestMapping(value = "/criticalPath", method = RequestMethod.POST)
+    @CrossOrigin(origins = "http://localhost")
+    @RequestMapping(value = "/criticalPath",
+            method = RequestMethod.POST)
     @ResponseBody
-    public List<Node> getCP(@RequestBody Node[] nodes) {
+    public List<Node> getCP(@RequestBody Node[] nodes) throws Exception {
         return criticalPathService.getCP(Arrays.asList(nodes));
     }
 
-    @RequestMapping(value = "/pert", method = RequestMethod.POST)
+    @CrossOrigin(origins = "http://localhost")
+    @RequestMapping(value = "/pert",
+            method = RequestMethod.POST)
     @ResponseBody
     public List<Node> getPERT(@RequestBody Node[] nodes) {
         return pertService.getPERT(Arrays.asList(nodes));
