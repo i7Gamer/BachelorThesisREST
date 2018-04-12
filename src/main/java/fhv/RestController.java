@@ -16,7 +16,7 @@ public class RestController {
     @Autowired
     PertService pertService;
 
-    @CrossOrigin(origins = "http://localhost")
+    @CrossOrigin(origins = "http://rzipas.win:8080")
     @RequestMapping(value = "/criticalPath",
             method = RequestMethod.POST)
     @ResponseBody
@@ -24,7 +24,7 @@ public class RestController {
         return criticalPathService.getCP(Arrays.asList(nodes));
     }
 
-    @CrossOrigin(origins = "http://localhost")
+    @CrossOrigin(origins = "http://rzipas.win:8080")
     @RequestMapping(value = "/pert",
             method = RequestMethod.POST)
     @ResponseBody
