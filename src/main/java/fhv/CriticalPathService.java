@@ -22,12 +22,19 @@ public class CriticalPathService {
 
         List<Node> startElements = new ArrayList<>();
 
+        if (elements.size() == 0 || links.size() == 0) {
+            throw new Exception("No elements or links found");
+        }
 
         for (Node n : elements) {
             List<Node> linksToNode = links.stream().filter(l -> l.getTarget().getId().equals(n.getId())).collect(Collectors.toList());
             if (linksToNode.size() == 0) {
                 startElements.add(n);
             }
+            n.setEarlyFinish(0);
+            n.setEarlyStart(0);
+            n.setLateFinish(0);
+            n.setLateStart(0);
         }
 
         if (startElements.size() == 0) {
@@ -43,13 +50,7 @@ public class CriticalPathService {
             }
         }
 
-        // critical path durchlaufen
-        for (Node node : criticalPath.nodes) {
-            elements.stream().filter(n -> n.getId().equals(node.getId())).findFirst().get().setIsCriticalPath(1);
-        }
-
         // alle pfade von hinten nach vorne durchlaufen und restliche berechnungen durchführen
-
         for (Path p : allPaths) {
             int value = criticalPath.getDurationSum();
             for (int i = p.nodes.size() - 1; i >= 0; i--) {
@@ -63,10 +64,22 @@ public class CriticalPathService {
                 }
             }
         }
+
+        // critical path durchlaufen
+        for (Node node : elements) {
+            if (node.getEarlyStart() == node.getLateStart() && node.getLateFinish() == node.getEarlyFinish()) {
+                node.setIsCriticalPath(1);
+            }
+        }
         return elements;
     }
 
-    public Path getCriticalPath(Path path, Node currentElement){
+    public Path getCriticalPath(Path path, Node currentElement) throws Exception {
+
+        if (path.nodes.contains(currentElement)) {
+            throw new Exception("Cycle detected, critical path cannot be detected");
+        }
+
         // insert early start and finish
         if (path.durationSum > currentElement.getEarlyStart()) {
             currentElement.setEarlyStart(path.durationSum);
