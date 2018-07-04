@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,12 +38,12 @@ public class RestController {
     @ResponseBody
     public List<Node> getMC(@RequestBody Node[] nodes) throws Exception {
         // extract sample Size and remove sampleSize node
-        List<Node> nodeList = Arrays.asList(nodes);
+        ArrayList<Node> nodeList = new ArrayList<>(Arrays.asList(nodes));
         Node sampleSizeNode = nodeList.stream().filter(n -> n.getType().equals("sampleSize")).findFirst().get();
         int sampleSize = sampleSizeNode.getSampleSize();
         nodeList.remove(sampleSizeNode);
 
         // call with sample size
-        return monteCarloService.getMCNew(Arrays.asList(nodes), sampleSize);
+        return monteCarloService.getMCNew(nodeList, sampleSize);
     }
 }

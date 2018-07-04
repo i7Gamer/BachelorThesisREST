@@ -111,9 +111,9 @@ public class RestTest {
     }
 
     @Test
-    public void mcTest() {
-        List<Node> result = monteCarloService.getMC(getNodes());
-
+    public void mcTest() throws Exception {
+        List<Node> result = monteCarloService.getMCNew(getNodes(), 100);
+        result.size();
         // TODO check if nodes are correct
     }
 }

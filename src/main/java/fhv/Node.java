@@ -28,6 +28,6 @@ public class Node {
     private int timesOnCriticalPath = 0;
     private List<Integer> mcDurationValues = new ArrayList<>();
     private int sampleSize;
-    private int probabilityToBeOnCriticalPath;
-    private int variance;
+    private double probabilityToBeOnCriticalPath;
+    private double variance;
 }

@@ -23,9 +23,13 @@ public class MonteCarloService {
         for (int i = 0; i < sampleSize; i++) {
 
             // get one duration for every element
-            for (Node n : nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList())) {
+            for (Node n : nodes.stream().filter(n -> n.getType().equals("html.Element")).collect(Collectors.toList())) {
                 int result = getOneMCValue(n.getMinTime(), n.getEstTime(), n.getMaxTime(), 4);
                 n.setDuration(result);
+                n.setIsCriticalPath(0);
+                if (n.getMcDurationValues() == null) {
+                    n.setMcDurationValues(new ArrayList<>());
+                }
                 n.getMcDurationValues().add(result);
             }
 
@@ -42,32 +46,35 @@ public class MonteCarloService {
 
         // calculate probability for each element to be on the critical path
         for (Node n : nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList())) {
-            n.setProbabilityToBeOnCriticalPath(n.getTimesOnCriticalPath() / sampleSize);
+            n.setProbabilityToBeOnCriticalPath((double) n.getTimesOnCriticalPath() / (double) sampleSize);
+            n.setIsCriticalPath(0);
 
-            int duration = mostCommon(n.getMcDurationValues());
+            int duration = (int) n.getMcDurationValues().stream().mapToDouble(a -> a).sum() / sampleSize;
 
-            int sum = 0;
-
+            double variance = 0;
             for (int i : n.getMcDurationValues()) {
-                sum = sum + (i - duration);
+                variance += (i - duration) * (i - duration);
             }
+            n.setVariance(variance / (sampleSize - 1));
 
-            n.setVariance((sum * sum) / (sampleSize - 1));
+            n.setDuration(duration);
         }
+
+        List<Node> criticalPath = criticalPathService.getCP(nodes);
 
         return nodes;
     }
 
-    public List<Node> getMC(List<Node> nodes) {
-        List<Node> elements = nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList());
+    private int getOneMCValue(double a, double m, double b, double k) {
+        double mean = (a + k * m + b) / (k + 2);
+        double sd = (b - a) / (k + 2);
+        double alpha = ((mean - a) / (b - a)) * ((mean - a) * (b - mean) / (sd * sd) - 1);
+        double beta = alpha * (b - mean) / (mean - a);
 
-        for (Node n : elements) {
-            if (n.getEstTime() != 0 && n.getMinTime() != 0 && n.getMaxTime() != 0) {
-                int result = getMCValue(n.getMinTime(), n.getEstTime(), n.getMaxTime(), 4);
-                n.setDuration(result);
-            }
-        }
-        return elements;
+        BetaDistribution betaDistribution = new BetaDistribution(alpha, beta);
+        double result = betaDistribution.sample();
+        double x = a + result * (b - a);
+        return (int) x;
     }
 
     private int getMCValue(double a, double m, double b, double k) {
@@ -88,18 +95,6 @@ public class MonteCarloService {
         return mostCommon(results);
     }
 
-    private int getOneMCValue(double a, double m, double b, double k) {
-        double mean = (a + k * m + b) / (k + 2);
-        double sd = (b - a) / (k + 2);
-        double alpha = ((mean - a) / (b - a)) * ((mean - a) * (b - mean) / (sd * sd) - 1);
-        double beta = alpha * (b - mean) / (mean - a);
-
-        BetaDistribution betaDistribution = new BetaDistribution(alpha, beta);
-        double result = betaDistribution.sample();
-        double x = a + result * (b - a);
-        return (int) x;
-    }
-
     public <T> T mostCommon(List<T> list) {
         Map<T, Integer> map = new HashMap<>();
 
@@ -116,5 +111,17 @@ public class MonteCarloService {
         }
 
         return max.getKey();
+    }
+
+    public List<Node> getMC(List<Node> nodes) {
+        List<Node> elements = nodes.stream().filter(n -> !n.getType().equals("link")).collect(Collectors.toList());
+
+        for (Node n : elements) {
+            if (n.getEstTime() != 0 && n.getMinTime() != 0 && n.getMaxTime() != 0) {
+                int result = getMCValue(n.getMinTime(), n.getEstTime(), n.getMaxTime(), 4);
+                n.setDuration(result);
+            }
+        }
+        return elements;
     }
 }
